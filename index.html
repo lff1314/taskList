@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="./node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <style>
+        .del{
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <nav class="navbar navbar-light bg-danger">
+        <a class="navbar-brand" href="#">
+            任务清单
+        </a>
+    </nav>
+   <div class="container" style="margin-top: 30px">
+       <div class="card">
+           <div class="card-header">
+               <div class="input-group mb-3">
+                   <div class="input-group-prepend">
+                       <span class="input-group-text" id="basic-addon1">还有{{count}}事情没去做</span>
+                   </div>
+                   <input type="text" class="form-control" v-model="val" @keyup.enter="add" placeholder="任务内容" aria-label="Username" aria-describedby="basic-addon1">
+               </div>
+           </div>
+           <div class="card-body" v-for="todo of newTodos" @dblclick="input(todo)" @mouseleave="move" >
+               <input type="checkbox" v-model="todo.isSelected" >
+               <span :class="{del:todo.isSelected}">
+                   <span v-show="!(cur==todo)" :class="!(todo.isSelected)">
+                   {{todo.title}}</span>
+                   <!--fcous不能在show方法的后面，否则，不能生效-->
+                   <input   type="text"   v-model="todo.title" v-show="cur==todo"  v-focus="cur==todo" @keyup.enter="move">
+               </span>
+
+               <button class="btn-danger float-right" @click="remove(todo)">&bigotimes;</button>
+           </div>
+
+           <div class="card-footer">
+               <a class="btn btn-primary" href="#/all" role="button">全部</a>
+               <a class="btn btn-primary" href="#/finish" role="button">已完成</a>
+               <a class="btn btn-primary" href="#/unfinish" role="button">未完成</a>
+           </div>
+       </div>
+   </div>
+</div>
+</body>
+<script src="./node_modules/vue/dist/vue.js"></script>
+<script>
+    var vm=new Vue({
+        el:"#app",
+        directives:{
+            focus(el,binding){
+                if(binding.value){
+                    el.focus();
+                    console.log(el);
+                }
+            },
+        },
+        watch:{
+          todos:{
+              handler(){
+                  localStorage.setItem("todos",JSON.stringify(this.todos));
+              }, deep:true,
+          }
+        },
+        data:{
+            val:"",
+            hash:"qw",
+            todos:[{
+                title:"张玉学习",
+                isSelected:false,
+            },{
+                title:"张玉学习",
+                isSelected:false,
+            }],
+            cur:{},
+        },
+        created(){
+            this.todos=JSON.parse(localStorage.getItem("todos"));
+            this.hash=window.location.hash.slice(2) || null;
+            //hashchange 监听hase值的改变
+            window.addEventListener("hashchange",()=>{
+                console.log(this.hash);
+                this.hash=window.location.hash.slice(2);
+            })
+        },
+        methods:{
+            add(){
+                this.todos.push({
+                    title:this.val,
+                    isSelected:false,
+                });
+                this.val=""
+            },
+            remove(todo){
+                this.todos=this.todos.filter(item=>!(item==todo));
+                console.log(todo);
+            },
+            input(todo){
+               this.cur=todo;
+            },
+            move(){
+                this.cur={};
+            }
+        },
+        computed:{
+            count(){
+                return this.todos.filter(item=>!item.isSelected).length;
+            },
+            newTodos(){
+                if(this.hash==="all"){
+                    return this.todos
+                }
+                if(this.hash==="finish"){
+                    return this.todos.filter(item=>item.isSelected);
+                }if(this.hash==="unfinish"){
+                    return this.todos.filter(item=>!item.isSelected);
+                }
+                return this.todos;
+            }
+        }
+    })
+</script>
+</html>
